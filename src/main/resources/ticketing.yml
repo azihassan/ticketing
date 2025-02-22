@@ -1,0 +1,230 @@
+openapi: 3.0.3
+info:
+  title: Ticketing System API
+  version: 1.0.0
+  description: API for a ticketing system with role-based access control
+
+paths:
+  /tickets:
+    get:
+      x-spring-paginated: true
+      summary: List tickets
+      operationId: listTickets
+      description: Employees see their own tickets. IT Support sees all tickets.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [new, in_progress, resolved]
+        - name: id
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: A list of tickets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Ticket'
+    post:
+      summary: Create a new ticket
+      operationId: createTicket
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TicketCreate'
+      responses:
+        '201':
+          description: Ticket created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ticket'
+
+  /tickets/{ticketId}:
+    get:
+      summary: Get a ticket by ID
+      operationId: getTicketById
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Ticket details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ticket'
+    patch:
+      summary: Update ticket status (IT Support only)
+      operationId: updateTicketStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [new, in_progress, resolved]
+      responses:
+        '200':
+          description: Ticket status updated
+
+  /tickets/{ticketId}/comments:
+    x-spring-paginated: true
+    get:
+      summary: List comments on a ticket
+      operationId: listComments
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of comments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Comment'
+    post:
+      summary: Add a comment to a ticket
+      operationId: addComment
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentCreate'
+      responses:
+        '201':
+          description: Comment added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+
+  /tickets/{ticketId}/comments/{commentId}:
+    patch:
+      summary: Update a comment
+      operationId: updateComment
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: commentId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                text:
+                  type: string
+      responses:
+        '200':
+          description: Comment updated
+
+components:
+  schemas:
+    Ticket:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        priority:
+          type: string
+          enum: [low, medium, high]
+        category:
+          type: string
+          enum: [network, hardware, software, other]
+        status:
+          type: string
+          enum: [new, in_progress, resolved]
+        created_at:
+          type: string
+          format: date-time
+    TicketCreate:
+      type: object
+      required: [title, description, priority, category]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        priority:
+          type: string
+          enum: [low, medium, high]
+        category:
+          type: string
+          enum: [network, hardware, software, other]
+    Comment:
+      type: object
+      properties:
+        id:
+          type: integer
+        text:
+          type: string
+    CommentCreate:
+      type: object
+      required: [text]
+      properties:
+        text:
+          type: string
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
