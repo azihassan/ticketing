@@ -4,23 +4,18 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
-    <changeSet id="1" author="hassan">
+    <changeSet id="create_ticket_table" author="hassan">
         <createTable tableName="ticket">
-            <column name="id" type="int">
+            <column name="id" type="long" autoIncrement="true">
                 <constraints primaryKey="true"/>
             </column>
+            <column name="title" type="varchar(255)"/>
             <column name="description" type="text"/>
-            <column name="priority" type="text"/>
-            <column name="category" type="text"/>
-            <column name="created_at" type="text"/>
-            <column name="created_by" type="text"/>
-        </createTable>
-        <createTable tableName="status">
-            <column name="id" type="int">
-                <constraints primaryKey="true"/>
-            </column>
-            <column name="slug" type="text"/>
-            <column name="name" type="text"/>
+            <column name="priority" type="int"/>
+            <column name="category" type="varchar(255)"/>
+            <column name="status" type="varchar(255)"/>
+            <column name="created_at" type="datetime"/>
+            <column name="created_by" type="varchar(255)"/>
         </createTable>
     </changeSet>
 
