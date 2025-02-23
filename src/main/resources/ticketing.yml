@@ -186,31 +186,37 @@ components:
         description:
           type: string
         priority:
-          type: string
-          enum: [low, medium, high]
+          $ref: '#/components/schemas/Priority'
         category:
-          type: string
-          enum: [network, hardware, software, other]
+          $ref: '#/components/schemas/Category'
         status:
-          type: string
-          enum: [new, in_progress, resolved]
+          $ref: '#/components/schemas/Status'
         created_at:
           type: string
           format: date-time
     TicketCreate:
       type: object
-      required: [title, description, priority, category]
+      required: [title, description, priority, category, status]
       properties:
         title:
           type: string
         description:
           type: string
         priority:
-          type: string
-          enum: [low, medium, high]
+          $ref: '#/components/schemas/Priority'
         category:
-          type: string
-          enum: [network, hardware, software, other]
+          $ref: '#/components/schemas/Category'
+        status:
+          $ref: '#/components/schemas/Status'
+    Status:
+      type: string
+      enum: [new, in_progress, resolved]
+    Priority:
+      type: string
+      enum: [low, medium, high]
+    Category:
+      type: string
+      enum: [network, hardware, software, other]
     Comment:
       type: object
       properties:
