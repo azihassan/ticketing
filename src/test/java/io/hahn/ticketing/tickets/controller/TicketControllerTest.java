@@ -26,8 +26,8 @@ public class TicketControllerTest {
     private ObjectMapper objectMapper;
 
     @Test
-    @WithMockUser(authorities = { "ROLE_EMPLOYEE" })
-    public void shouldCreateTicket() throws Exception {
+    @WithMockUser(authorities = { "EMPLOYEE" })
+    public void whenUserIsEmployee_shouldCreateTicket() throws Exception {
         TicketCreate ticket = new TicketCreate(
                 "Ticket 1",
                 "New ticket",
@@ -52,5 +52,20 @@ public class TicketControllerTest {
                 .andExpect(jsonPath("$.priority").value(ticket.getPriority().getValue()))
                 .andExpect(jsonPath("$.category").value(ticket.getCategory().getValue()))
                 .andExpect(jsonPath("$.status").value(ticket.getStatus().getValue()));
+    }
+
+    @Test
+    @WithMockUser(authorities = { "IT" })
+    public void whenUserIsNotEmployee_shouldNotCreateTicket() throws Exception {
+        String json = objectMapper.writeValueAsString(new TicketCreate(
+                "Ticket 1",
+                "New ticket",
+                Priority.MEDIUM,
+                Category.HARDWARE,
+                Status.IN_PROGRESS
+        ));
+        mvc.perform(post("/tickets").content(json).contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isForbidden());
     }
 }

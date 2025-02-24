@@ -27,10 +27,10 @@ public class TicketService implements TicketsApiDelegate {
     }
 
     @Override
-    @PreAuthorize("hasAuthority('ROLE_EMPLOYEE')")
+    @PreAuthorize("hasAuthority('EMPLOYEE')")
     public ResponseEntity<Ticket> createTicket(TicketCreate ticketCreate) {
         TicketEntity createdTicket = repository.save(mapper.toEntity(ticketCreate));
-        return new ResponseEntity<Ticket>(mapper.toDTO(createdTicket), HttpStatus.CREATED);
+        return new ResponseEntity<>(mapper.toDTO(createdTicket), HttpStatus.CREATED);
     }
 
     @Override
