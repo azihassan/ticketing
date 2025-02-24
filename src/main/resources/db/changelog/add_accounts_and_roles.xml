@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="add_accounts_and_roles" author="hassan">
+        <createTable tableName="account">
+            <column name="id" type="long" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="username" type="varchar(255)"/>
+            <column name="password" type="varchar(255)"/>
+            <column name="created_at" type="datetime"/>
+        </createTable>
+
+        <insert tableName="account">
+            <column name="username">employee_demo</column>
+            <column name="password">$2a$12$Y1d9IlKr3c3htewz7JcBVekS6Br.aLYLpyFJtoogYrpBgdAeAbutO</column>
+        </insert>
+
+        <insert tableName="account">
+            <column name="username">it_demo</column>
+            <column name="password">$2a$12$UeFKPpQ3Z194q16RQzaYDuDl90AhIjntbam3a1zMmpiM89yk9h0C.</column>
+        </insert>
+
+        <createTable tableName="role">
+            <column name="id" type="long" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="role" type="varchar(255)"/>
+            <column name="created_at" type="datetime"/>
+        </createTable>
+
+        <insert tableName="role">
+            <column name="role">EMPLOYEE</column>
+        </insert>
+
+        <insert tableName="role">
+            <column name="role">IT</column>
+        </insert>
+
+        <createTable tableName="account_role">
+            <column name="id" type="long" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="role_id" type="long">
+                <constraints nullable="false" references="role(id)" foreignKeyName="account_role_role_fk"/>
+            </column>
+            <column name="account_id" type="long">
+                <constraints nullable="false" references="account(id)" foreignKeyName="account_role_account_fk"/>
+            </column>
+            <column name="created_at" type="datetime"/>
+        </createTable>
+
+        <insert tableName="account_role">
+            <column name="account_id">1</column>
+            <column name="role_id">1</column>
+        </insert>
+
+        <insert tableName="account_role">
+            <column name="account_id">2</column>
+            <column name="role_id">2</column>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

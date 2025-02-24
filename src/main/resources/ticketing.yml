@@ -5,6 +5,22 @@ info:
   description: API for a ticketing system with role-based access control
 
 paths:
+  /login:
+    post:
+      summary: Login endpoint
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Login'
+      responses:
+        '204':
+          description: Login succeeded
+        '401':
+          description: Login failed
+
   /tickets:
     get:
       x-spring-paginated: true
@@ -176,6 +192,13 @@ paths:
 
 components:
   schemas:
+    Login:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
     Ticket:
       type: object
       properties:
