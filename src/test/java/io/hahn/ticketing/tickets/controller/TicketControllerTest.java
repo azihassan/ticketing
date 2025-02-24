@@ -23,6 +23,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @SpringBootTest
 public class TicketControllerTest {
+    private final SimpleGrantedAuthority EMPLOYEE_AUTHORITY = new SimpleGrantedAuthority("EMPLOYEE");
+    private final SimpleGrantedAuthority IT_AUTHORITY = new SimpleGrantedAuthority("IT");
+
+    private final UserRequestPostProcessor mockEmployeeAccount = user("employee_demo").authorities(EMPLOYEE_AUTHORITY);
+    private final UserRequestPostProcessor mockAnotherEmployeeAccount = user("employee_demo_2").authorities(EMPLOYEE_AUTHORITY);
+    private final UserRequestPostProcessor mockITAccount = user("it_demo").authorities(IT_AUTHORITY);
+
     @Autowired
     private MockMvc mvc;
 
@@ -30,7 +37,7 @@ public class TicketControllerTest {
     private ObjectMapper objectMapper;
 
     @Test
-    @WithMockUser(authorities = { "EMPLOYEE" })
+    @WithMockUser(username = "employee_demo", authorities = { "EMPLOYEE" })
     @Transactional
     public void whenUserIsEmployee_shouldCreateTicket() throws Exception {
         TicketCreate ticket = new TicketCreate(
@@ -42,7 +49,6 @@ public class TicketControllerTest {
         );
         String json = objectMapper.writeValueAsString(ticket);
         String response = mvc.perform(post("/tickets").content(json).contentType(MediaType.APPLICATION_JSON))
-                .andDo(print())
                 .andExpect(status().isCreated())
                 .andReturn()
                 .getResponse()
@@ -56,11 +62,12 @@ public class TicketControllerTest {
                 .andExpect(jsonPath("$.description").value(ticket.getDescription()))
                 .andExpect(jsonPath("$.priority").value(ticket.getPriority().getValue()))
                 .andExpect(jsonPath("$.category").value(ticket.getCategory().getValue()))
-                .andExpect(jsonPath("$.status").value(ticket.getStatus().getValue()));
+                .andExpect(jsonPath("$.status").value(ticket.getStatus().getValue()))
+                .andExpect(jsonPath("$.created_by.username").value("employee_demo"));
     }
 
     @Test
-    @WithMockUser(authorities = { "IT" })
+    @WithMockUser(username = "it_demo", authorities = { "IT" })
     @Transactional
     public void whenUserIsNotEmployee_shouldNotCreateTicket() throws Exception {
         String json = objectMapper.writeValueAsString(new TicketCreate(
@@ -71,14 +78,12 @@ public class TicketControllerTest {
                 Status.IN_PROGRESS
         ));
         mvc.perform(post("/tickets").content(json).contentType(MediaType.APPLICATION_JSON))
-                .andDo(print())
                 .andExpect(status().isForbidden());
     }
 
     @Test
     @Transactional
     public void shouldListTickets() throws Exception {
-        UserRequestPostProcessor mockEmployeeAccount = user("employee").authorities(new SimpleGrantedAuthority("EMPLOYEE"));
         for(int t = 0; t < 20; t++) {
             TicketCreate ticket = new TicketCreate(
                     "Ticket " + t,
@@ -89,11 +94,9 @@ public class TicketControllerTest {
             );
             String json = objectMapper.writeValueAsString(ticket);
             mvc.perform(post("/tickets").content(json).contentType(MediaType.APPLICATION_JSON).with(mockEmployeeAccount))
-                    .andDo(print())
                     .andExpect(status().isCreated());
         }
 
-        UserRequestPostProcessor mockITAccount = user("it").authorities(new SimpleGrantedAuthority("IT"));
         mvc.perform(get("/tickets?page=0&size=10").with(mockITAccount))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(20))
@@ -110,7 +113,6 @@ public class TicketControllerTest {
     @Test
     @Transactional
     public void shouldFilterTickets() throws Exception {
-        UserRequestPostProcessor mockEmployeeAccount = user("employee").authorities(new SimpleGrantedAuthority("EMPLOYEE"));
         TicketCreate ticket = new TicketCreate(
                 "Ticket",
                 "New ticket",
@@ -122,9 +124,8 @@ public class TicketControllerTest {
                 .content(objectMapper.writeValueAsString(ticket))
                 .contentType(MediaType.APPLICATION_JSON)
                 .with(mockEmployeeAccount)
-        ).andDo(print()).andExpect(status().isCreated());
+        ).andExpect(status().isCreated());
 
-        UserRequestPostProcessor mockAnotherEmployeeAccount = user("employee 2").authorities(new SimpleGrantedAuthority("EMPLOYEE"));
         ticket.setStatus(Status.RESOLVED);
         mvc.perform(post("/tickets")
                 .content(objectMapper.writeValueAsString(ticket))
@@ -132,7 +133,7 @@ public class TicketControllerTest {
                 .with(mockAnotherEmployeeAccount)
         ).andExpect(status().isCreated());
 
-        UserRequestPostProcessor mockITAccount = user("it").authorities(new SimpleGrantedAuthority("IT"));
+        UserRequestPostProcessor mockITAccount = user("it_demo").authorities(new SimpleGrantedAuthority("IT"));
         mvc.perform(get("/tickets?page=0&size=20&status=IN_PROGRESS").with(mockITAccount))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(1));
@@ -144,5 +145,51 @@ public class TicketControllerTest {
         mvc.perform(get("/tickets?page=0&size=20&status=NEW").with(mockITAccount))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(0));
+    }
+
+    @Test
+    @Transactional
+    public void whenUserIsEmployee_shouldListOwnTickets() throws Exception {
+        TicketCreate employeeTicket = new TicketCreate().title("Ticket of employee #1");
+        mvc.perform(post("/tickets")
+                .content(objectMapper.writeValueAsString(employeeTicket))
+                .contentType(MediaType.APPLICATION_JSON)
+                .with(mockEmployeeAccount)
+        ).andExpect(status().isCreated());
+
+        TicketCreate anotherEmployeeTicket = new TicketCreate().title("Ticket of employee #2");
+        mvc.perform(post("/tickets")
+                .content(objectMapper.writeValueAsString(anotherEmployeeTicket))
+                .contentType(MediaType.APPLICATION_JSON)
+                .with(mockAnotherEmployeeAccount)
+        ).andExpect(status().isCreated());
+
+        mvc.perform(get("/tickets?page=0&size=20").with(mockEmployeeAccount))
+                .andExpect(status().isOk())
+                .andDo(print())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].title").value(employeeTicket.getTitle()));
+
+        mvc.perform(get("/tickets?page=0&size=20").with(mockAnotherEmployeeAccount))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].title").value(anotherEmployeeTicket.getTitle()));
+    }
+
+    @Test
+    @Transactional
+    public void whenUserIsEmployee_shouldViewOwnTicket() throws Exception {
+        Ticket employeeTicket = objectMapper.readValue(mvc.perform(post("/tickets")
+                .content(objectMapper.writeValueAsString(new TicketCreate().title("Ticket of employee #1")))
+                .contentType(MediaType.APPLICATION_JSON)
+                .with(mockEmployeeAccount)
+        ).andExpect(status().isCreated()).andReturn().getResponse().getContentAsString(), Ticket.class);
+
+
+        mvc.perform(get("/tickets/" + employeeTicket.getId()).with(mockEmployeeAccount))
+                .andExpect(status().isOk());
+
+        mvc.perform(get("/tickets/" + employeeTicket.getId()).with(mockAnotherEmployeeAccount))
+                .andExpect(status().isForbidden());
     }
 }

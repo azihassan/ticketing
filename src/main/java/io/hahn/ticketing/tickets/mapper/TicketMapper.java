@@ -7,7 +7,7 @@ import io.hahn.ticketing.tickets.entity.TicketEntity;
 import org.mapstruct.Mapper;
 import org.springframework.data.domain.Page;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = AccountMapper.class)
 public interface TicketMapper {
     TicketEntity toEntity(TicketCreate dto);
 
