@@ -226,6 +226,8 @@ components:
         created_at:
           type: string
           format: date-time
+        created_by:
+          $ref: '#/components/schemas/Account'
     TicketCreate:
       type: object
       required: [title, description, priority, category, status]
@@ -261,6 +263,13 @@ components:
       required: [text]
       properties:
         text:
+          type: string
+    Account:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
           type: string
   securitySchemes:
     BearerAuth:
