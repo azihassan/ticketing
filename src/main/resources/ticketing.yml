@@ -112,8 +112,8 @@ paths:
           description: Ticket status updated
 
   /tickets/{ticketId}/comments:
-    x-spring-paginated: true
     get:
+      x-spring-paginated: true
       summary: List comments on a ticket
       operationId: listComments
       security:
@@ -123,16 +123,14 @@ paths:
           in: path
           required: true
           schema:
-            type: integer
+            type: long
       responses:
         '200':
           description: List of comments
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Comment'
+                $ref: '#/components/schemas/CommentPage'
     post:
       summary: Add a comment to a ticket
       operationId: addComment
@@ -143,7 +141,7 @@ paths:
           in: path
           required: true
           schema:
-            type: integer
+            type: long
       requestBody:
         required: true
         content:
@@ -251,6 +249,17 @@ components:
     Category:
       type: string
       enum: [NETWORK, HARDWARE, SOFTWARE, OTHER]
+    CommentPage:
+      type: object
+      properties:
+        totalPages:
+          type: integer
+        totalElements:
+          type: string
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Comment'
     Comment:
       type: object
       properties:
@@ -258,6 +267,13 @@ components:
           type: integer
         text:
           type: string
+        created_at:
+          type: string
+          format: date-time
+        created_by:
+          $ref: '#/components/schemas/Account'
+        ticket_id:
+          type: integer
     CommentCreate:
       type: object
       required: [text]

@@ -1,17 +1,17 @@
 package io.hahn.ticketing.tickets.service;
 
 import io.hahn.ticketing.api.TicketsApiDelegate;
-import io.hahn.ticketing.model.Status;
-import io.hahn.ticketing.model.Ticket;
-import io.hahn.ticketing.model.TicketCreate;
-import io.hahn.ticketing.model.TicketPage;
+import io.hahn.ticketing.model.*;
+import io.hahn.ticketing.tickets.entity.CommentEntity;
 import io.hahn.ticketing.tickets.entity.TicketEntity;
-import io.hahn.ticketing.tickets.mapper.AccountMapper;
+import io.hahn.ticketing.users.mapper.AccountMapper;
+import io.hahn.ticketing.tickets.mapper.CommentMapper;
 import io.hahn.ticketing.tickets.mapper.TicketMapper;
+import io.hahn.ticketing.tickets.repository.CommentRepository;
 import io.hahn.ticketing.tickets.repository.TicketRepository;
 import io.hahn.ticketing.users.entity.AccountEntity;
+import io.hahn.ticketing.users.entity.UserWithID;
 import io.hahn.ticketing.users.repository.AccountRepository;
-import jakarta.persistence.criteria.Join;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,7 +23,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.util.ObjectUtils;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Optional;
@@ -33,13 +32,17 @@ public class TicketService implements TicketsApiDelegate {
 
     private final TicketRepository repository;
     private final TicketMapper mapper;
-    private final AccountRepository accountRepository;
+    private final AccountMapper accountMapper;
+    private final CommentMapper commentMapper;
+    private final CommentRepository commentRepository;
 
     @Autowired
-    public TicketService(TicketRepository repository, TicketMapper mapper, AccountRepository accountRepository) {
+    public TicketService(TicketRepository repository, TicketMapper mapper, AccountMapper accountMapper, AccountRepository accountRepository, CommentMapper commentMapper, CommentRepository commentRepository) {
         this.repository = repository;
         this.mapper = mapper;
-        this.accountRepository = accountRepository;
+        this.accountMapper = accountMapper;
+        this.commentMapper = commentMapper;
+        this.commentRepository = commentRepository;
     }
 
     @Override
@@ -54,18 +57,16 @@ public class TicketService implements TicketsApiDelegate {
     @Override
     public ResponseEntity<Ticket> getTicketById(Integer ticketId) {
         Optional<TicketEntity> ticket = repository.findById(Long.valueOf(ticketId));
-        verifyOwnership(ticket);
+        ticket.ifPresent(this::verifyOwnership);
         return ResponseEntity.of(ticket.map(mapper::toDTO));
     }
 
-    private void verifyOwnership(Optional<TicketEntity> ticket) {
-        ticket.ifPresent(t -> {
-            Authentication account = SecurityContextHolder.getContext().getAuthentication();
-            boolean isEmployee = !account.getAuthorities().contains(new SimpleGrantedAuthority("IT"));
-            if(isEmployee && !account.getName().equals(t.createdBy.username)) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN);
-            }
-        });
+    private void verifyOwnership(TicketEntity ticket) {
+        Authentication account = SecurityContextHolder.getContext().getAuthentication();
+        boolean isEmployee = !account.getAuthorities().contains(new SimpleGrantedAuthority("IT"));
+        if(isEmployee && !account.getName().equals(ticket.createdBy.username)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
     }
 
     @Override
@@ -79,29 +80,30 @@ public class TicketService implements TicketsApiDelegate {
         return ResponseEntity.ok(mapper.toTicketPage(tickets));
     }
 
-    private AccountEntity getLoggedInAccount() {
+    @Override
+    @PreAuthorize("hasAuthority('IT')")
+    public ResponseEntity<Comment> addComment(Long ticketId, CommentCreate commentCreate) {
+        CommentEntity entity = commentMapper.toEntity(commentCreate, ticketId);
+        entity.createdBy = getLoggedInAccount();
+        CommentEntity createdComment = commentRepository.save(entity);
+        return new ResponseEntity<>(commentMapper.toDTO(createdComment), HttpStatus.CREATED);
+    }
+
+    @Override
+    public ResponseEntity<CommentPage> listComments(Long ticketId, final Pageable pageable) {
         Authentication account = SecurityContextHolder.getContext().getAuthentication();
-        return accountRepository.findByUsername(account.getName()).orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN));
-    }
-}
+        boolean isIT = account.getAuthorities().contains(new SimpleGrantedAuthority("IT"));
 
-class TicketSpecification {
-    public static Specification<TicketEntity> byStatus(String status) {
-        return ((root, query, builder) -> {
-            return ObjectUtils.isEmpty(status) ? builder.conjunction() : builder.equal(root.<Status>get("status"), status);
-        });
-    }
-
-    public static Specification<TicketEntity> byID(Long id) {
-        return ((root, query, builder) -> {
-            return id == null ? builder.conjunction() : builder.equal(root.<Long>get("id"), id);
-        });
+        if(isIT) {
+            Page<Comment> comments = commentRepository.findByTicketId(ticketId, pageable).map(commentMapper::toDTO);
+            return ResponseEntity.ok(commentMapper.toCommentPage(comments));
+        }
+        Page<Comment> comments = commentRepository.findByTicketIdAndTicketCreatedByUsername(ticketId, account.getName(), pageable).map(commentMapper::toDTO);
+        return ResponseEntity.ok(commentMapper.toCommentPage(comments));
     }
 
-    public static Specification<TicketEntity> byUsername(String username) {
-        return ((root, query, builder) -> {
-            Join<TicketEntity, AccountEntity> accountJoin = root.join("createdBy");
-            return builder.equal(accountJoin.<Long>get("username"), username);
-        });
+    private AccountEntity getLoggedInAccount() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return accountMapper.toEntity((UserWithID) authentication.getPrincipal());
     }
 }
