@@ -124,7 +124,7 @@ public class CommentControllerTest extends ControllerTest {
     }
 
     @Test
-    @Transactional
+    //@Transactional todo: find workaround with envers messing with transactional tests
     public void whenCommentIsUpdated_shouldStoreHistory() throws Exception {
         TicketCreate ticket = new TicketCreate(
                 "Ticket 1",
@@ -162,5 +162,19 @@ public class CommentControllerTest extends ControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .with(mockITAccount)
         ).andExpect(status().isOk()).andExpect(jsonPath("$.text").value(updatedComment.getText()));
+
+        mvc.perform(patch("/tickets/" + firstEmployeeTicket.getId() + "/comments/" + createdComment.getId())
+                .content(objectMapper.writeValueAsString(updatedComment.text("Hello there (updated again)")))
+                .contentType(MediaType.APPLICATION_JSON)
+                .with(mockITAccount)
+        ).andExpect(status().isOk());
+
+        mvc.perform(get("/tickets/" + firstEmployeeTicket.getId() + "/comments/" + createdComment.getId() + "/history")
+                .with(mockITAccount)
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].text").value(updatedComment.getText()))
+                .andExpect(jsonPath("$[1].text").value("Hello there (updated)"))
+                .andExpect(jsonPath("$[2].text").value("Hello there"));
     }
 }

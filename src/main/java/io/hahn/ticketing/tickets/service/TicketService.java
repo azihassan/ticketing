@@ -25,7 +25,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class TicketService implements TicketsApiDelegate {
@@ -52,6 +55,16 @@ public class TicketService implements TicketsApiDelegate {
         entity.createdBy = getLoggedInAccount();
         TicketEntity createdTicket = repository.save(entity);
         return new ResponseEntity<>(mapper.toDTO(createdTicket), HttpStatus.CREATED);
+    }
+
+    @Override
+    public ResponseEntity<List<Comment>> getCommentHistory(Long ticketId, Long commentId) {
+        List<Comment> revisions = commentRepository.findRevisions(commentId)
+                .stream()
+                .map(revision -> commentMapper.toDTO(revision.getEntity()))
+                .collect(Collectors.toList());
+        Collections.reverse(revisions);
+        return ResponseEntity.ok(revisions);
     }
 
     @Override

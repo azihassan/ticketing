@@ -35,6 +35,8 @@
 		<org.openapitools.version>0.2.1</org.openapitools.version>
 		<org.jacoco.version>0.8.12</org.jacoco.version>
 		<org.apache.maven.plugins.version>3.8.1</org.apache.maven.plugins.version>
+		<com.oracle.database.spring.version>24.4.0</com.oracle.database.spring.version>
+		<org.springframework.data.version>3.4.0</org.springframework.data.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -85,6 +87,12 @@
 			<groupId>org.mapstruct</groupId>
 			<artifactId>mapstruct</artifactId>
 			<version>${org.mapstruct.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.data</groupId>
+			<artifactId>spring-data-envers</artifactId>
+			<version>${org.springframework.data.version}</version>
 		</dependency>
 	</dependencies>
 

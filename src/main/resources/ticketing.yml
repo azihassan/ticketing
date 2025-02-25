@@ -190,6 +190,33 @@ paths:
               schema:
                 $ref: '#/components/schemas/Comment'
 
+  /tickets/{ticketId}/comments/{commentId}/history:
+    get:
+      summary: Get comment history
+      operationId: getCommentHistory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: long
+        - name: commentId
+          in: path
+          required: true
+          schema:
+            type: long
+      responses:
+        '200':
+          description: Comment history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Comment'
+
 components:
   schemas:
     Login:
