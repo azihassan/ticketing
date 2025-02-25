@@ -1,0 +1,22 @@
+version: '2.2'
+
+services:
+  app:
+    image: my-spring-boot-app
+    depends_on:
+      - oracle-db
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:oracle:thin:@oracle-db:1521/FREE
+      - SPRING_DATASOURCE_USERNAME=system
+      - SPRING_DATASOURCE_PASSWORD=oracle
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.OracleDialect
+    ports:
+      - "8080:8080"
+
+  oracle-db:
+    image: gvenzl/oracle-free
+    environment:
+      - ORACLE_PASSWORD=oracle
+      - ORACLE_DATABASE=FREE
+    ports:
+      - "1521:1521"
