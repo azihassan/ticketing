@@ -30,6 +30,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: azihassan/ticketing
+
       - name: Build and push Docker image
         id: push
         uses: docker/build-push-action@v6
