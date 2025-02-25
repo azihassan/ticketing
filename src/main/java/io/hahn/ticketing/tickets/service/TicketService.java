@@ -105,6 +105,16 @@ public class TicketService implements TicketsApiDelegate {
 
     @Override
     @PreAuthorize("hasAuthority('IT')")
+    public ResponseEntity<Ticket> updateTicketStatus(Long ticketId, UpdateTicketStatusRequest updateTicketStatusRequest) {
+        return ResponseEntity.of(repository.findById(ticketId).map(ticket -> {
+            ticket.status = mapper.toEntity(updateTicketStatusRequest.getStatus());
+            repository.save(ticket);
+            return mapper.toDTO(ticket);
+        }));
+    }
+
+    @Override
+    @PreAuthorize("hasAuthority('IT')")
     public ResponseEntity<Comment> addComment(Long ticketId, CommentCreate commentCreate) {
         CommentEntity entity = commentMapper.toEntity(commentCreate, ticketId);
         entity.createdBy = getLoggedInAccount();
