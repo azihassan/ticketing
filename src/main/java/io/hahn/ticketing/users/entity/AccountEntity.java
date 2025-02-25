@@ -13,7 +13,7 @@ public class AccountEntity {
     @GeneratedValue(strategy=GenerationType.IDENTITY)
     public Long id;
     public String username;
-    @Column(name = "\"password\"")
+    @Column(name = "passwd")
     public String password;
 
     @ManyToMany(fetch = FetchType.EAGER)
