@@ -55,8 +55,8 @@ public class TicketService implements TicketsApiDelegate {
     }
 
     @Override
-    public ResponseEntity<Ticket> getTicketById(Integer ticketId) {
-        Optional<TicketEntity> ticket = repository.findById(Long.valueOf(ticketId));
+    public ResponseEntity<Ticket> getTicketById(Long ticketId) {
+        Optional<TicketEntity> ticket = repository.findById(ticketId);
         ticket.ifPresent(this::verifyOwnership);
         return ResponseEntity.of(ticket.map(mapper::toDTO));
     }
@@ -78,6 +78,16 @@ public class TicketService implements TicketsApiDelegate {
         }
         Page<Ticket> tickets = repository.findAll(filters, pageable).map(mapper::toDTO);
         return ResponseEntity.ok(mapper.toTicketPage(tickets));
+    }
+
+    @Override
+    @PreAuthorize("hasAuthority('IT')")
+    public ResponseEntity<Comment> updateComment(Long ticketId, Long commentId, UpdateCommentRequest updateCommentRequest) {
+        return ResponseEntity.of(commentRepository.findByIdAndCreatedByUsername(commentId, getLoggedInAccount().username).map(comment -> {
+            comment.text = updateCommentRequest.getText();
+            commentRepository.save(comment);
+            return commentMapper.toDTO(comment);
+        }));
     }
 
     @Override
