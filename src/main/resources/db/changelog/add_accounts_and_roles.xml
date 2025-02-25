@@ -6,7 +6,7 @@
 
     <changeSet id="add_accounts_and_roles" author="hassan">
         <createTable tableName="account">
-            <column name="id" type="long" autoIncrement="true">
+            <column name="id" type="int" autoIncrement="true">
                 <constraints primaryKey="true"/>
             </column>
             <column name="username" type="varchar(255)"/>
@@ -30,7 +30,7 @@
         </insert>
 
         <createTable tableName="role">
-            <column name="id" type="long" autoIncrement="true">
+            <column name="id" type="int" autoIncrement="true">
                 <constraints primaryKey="true"/>
             </column>
             <column name="role" type="varchar(255)"/>
@@ -46,13 +46,13 @@
         </insert>
 
         <createTable tableName="account_role">
-            <column name="id" type="long" autoIncrement="true">
+            <column name="id" type="int" autoIncrement="true">
                 <constraints primaryKey="true"/>
             </column>
-            <column name="role_id" type="long">
+            <column name="role_id" type="int">
                 <constraints nullable="false" references="role(id)" foreignKeyName="account_role_role_fk"/>
             </column>
-            <column name="account_id" type="long">
+            <column name="account_id" type="int">
                 <constraints nullable="false" references="account(id)" foreignKeyName="account_role_account_fk"/>
             </column>
             <column name="created_at" type="datetime"/>
@@ -75,7 +75,7 @@
     </changeSet>
     
     <changeSet id="update_ticket_created_by" author="hassan">
-        <modifyDataType tableName="ticket" columnName="created_by" newDataType="long"/>
+        <modifyDataType tableName="ticket" columnName="created_by" newDataType="int"/>
         <addForeignKeyConstraint baseTableName="ticket" baseColumnNames="created_by" constraintName="ticket_account_fk"
                                  referencedTableName="account"
                                  referencedColumnNames="id"/>

@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 import static org.hibernate.envers.RelationTargetAuditMode.NOT_AUDITED;
 
 @Entity
-@Table(name = "comment")
+@Table(name = "reply") //comment is reserved in oracle SQL
 @Audited
 public class CommentEntity {
     @Id

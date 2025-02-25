@@ -6,7 +6,7 @@
 
     <changeSet id="create_ticket_table" author="hassan">
         <createTable tableName="ticket">
-            <column name="id" type="long" autoIncrement="true">
+            <column name="id" type="int" autoIncrement="true">
                 <constraints primaryKey="true"/>
             </column>
             <column name="title" type="varchar(255)"/>
