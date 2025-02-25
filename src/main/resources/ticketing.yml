@@ -105,11 +105,14 @@ paths:
               type: object
               properties:
                 status:
-                  type: string
-                  enum: [NEW, IN_PROGRESS, RESOLVED]
+                  $ref: '#/components/schemas/Status'
       responses:
         '200':
-          description: Ticket status updated
+          description: Ticket with status updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ticket'
 
   /tickets/{ticketId}/comments:
     get:

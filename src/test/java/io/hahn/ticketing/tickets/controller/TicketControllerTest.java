@@ -8,8 +8,8 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.UserRequestPostProcessor;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -169,5 +169,42 @@ public class TicketControllerTest extends ControllerTest {
 
         mvc.perform(get("/tickets/" + employeeTicket.getId()).with(mockAnotherEmployeeAccount))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @Transactional
+    public void whenStatusIsUpdated_shouldStoreHistory() throws Exception {
+        TicketCreate ticket = new TicketCreate(
+                "Ticket 1",
+                "New ticket",
+                Priority.MEDIUM,
+                Category.HARDWARE,
+                Status.NEW
+        );
+
+        Ticket firstEmployeeTicket = objectMapper.readValue(
+                mvc.perform(post("/tickets")
+                                .content(objectMapper.writeValueAsString(ticket))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .with(mockEmployeeAccount)
+                        ).andExpect(status().isCreated())
+                        .andReturn()
+                        .getResponse()
+                        .getContentAsString(),
+                Ticket.class);
+
+        UpdateTicketStatusRequest statusRequest = new UpdateTicketStatusRequest().status(Status.IN_PROGRESS);
+        mvc.perform(patch("/tickets/" + firstEmployeeTicket.getId())
+                .content(objectMapper.writeValueAsString(statusRequest))
+                .contentType(MediaType.APPLICATION_JSON)
+                .with(mockITAccount)
+        ).andExpect(status().isOk()).andExpect(jsonPath("$.status").value(statusRequest.getStatus().getValue()));
+
+        statusRequest.setStatus(Status.RESOLVED);
+        mvc.perform(patch("/tickets/" + firstEmployeeTicket.getId())
+                .content(objectMapper.writeValueAsString(statusRequest))
+                .contentType(MediaType.APPLICATION_JSON)
+                .with(mockITAccount)
+        ).andExpect(status().isOk()).andExpect(jsonPath("$.status").value(statusRequest.getStatus().getValue()));
     }
 }
