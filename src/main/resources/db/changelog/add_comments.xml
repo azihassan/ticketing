@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="add_comments" author="hassan">
+        <createTable tableName="comment">
+            <column name="id" type="long" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="text" type="varchar(255)"/>
+            <column name="created_at" type="datetime"/>
+            <column name="created_by" type="long">
+                <constraints foreignKeyName="comment_account_fk" references="account(id)" />
+            </column>
+            <column name="ticket_id" type="long">
+                <constraints foreignKeyName="comment_ticket_fk" references="ticket(id)" />
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="add_comment_history" author="hassan">
+        <createTable tableName="revinfo">
+            <column name="rev" type="long" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="revtstmp" type="bigint"/>
+        </createTable>
+
+        <createTable tableName="comment_aud">
+            <column name="id" type="long">
+                <constraints nullable="false" />
+            </column>
+            <column name="rev" type="long">
+                <constraints referencedTableName="revinfo"
+                             foreignKeyName="comment_aud_revinfo"
+                             referencedColumnNames="rev"
+                             nullable="false"/>
+            </column>
+            <column name="revtype" type="long">
+                <constraints nullable="false"/>
+            </column>
+            <column name="text" type="text">
+                <constraints nullable="true"/>
+            </column>
+            <column name="created_at" type="datetime"/>
+            <column name="created_by" type="long">
+                <constraints foreignKeyName="comment_aud_account_fk" references="account(id)" />
+            </column>
+            <column name="ticket_id" type="long">
+                <constraints foreignKeyName="comment_aud_ticket_fk" references="ticket(id)" />
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="comment_aud" columnNames="id, rev" />
+    </changeSet>
+
+</databaseChangeLog>

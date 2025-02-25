@@ -78,7 +78,7 @@ paths:
           in: path
           required: true
           schema:
-            type: integer
+            type: long
       responses:
         '200':
           description: Ticket details
@@ -96,7 +96,7 @@ paths:
           in: path
           required: true
           schema:
-            type: integer
+            type: long
       requestBody:
         required: true
         content:
@@ -112,8 +112,8 @@ paths:
           description: Ticket status updated
 
   /tickets/{ticketId}/comments:
-    x-spring-paginated: true
     get:
+      x-spring-paginated: true
       summary: List comments on a ticket
       operationId: listComments
       security:
@@ -123,16 +123,14 @@ paths:
           in: path
           required: true
           schema:
-            type: integer
+            type: long
       responses:
         '200':
           description: List of comments
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Comment'
+                $ref: '#/components/schemas/CommentPage'
     post:
       summary: Add a comment to a ticket
       operationId: addComment
@@ -143,7 +141,7 @@ paths:
           in: path
           required: true
           schema:
-            type: integer
+            type: long
       requestBody:
         required: true
         content:
@@ -169,12 +167,12 @@ paths:
           in: path
           required: true
           schema:
-            type: integer
+            type: long
         - name: commentId
           in: path
           required: true
           schema:
-            type: integer
+            type: long
       requestBody:
         required: true
         content:
@@ -187,6 +185,37 @@ paths:
       responses:
         '200':
           description: Comment updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+
+  /tickets/{ticketId}/comments/{commentId}/history:
+    get:
+      summary: Get comment history
+      operationId: getCommentHistory
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: long
+        - name: commentId
+          in: path
+          required: true
+          schema:
+            type: long
+      responses:
+        '200':
+          description: Comment history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Comment'
 
 components:
   schemas:
@@ -212,7 +241,7 @@ components:
       type: object
       properties:
         id:
-          type: integer
+          type: long
         title:
           type: string
         description:
@@ -251,13 +280,31 @@ components:
     Category:
       type: string
       enum: [NETWORK, HARDWARE, SOFTWARE, OTHER]
+    CommentPage:
+      type: object
+      properties:
+        totalPages:
+          type: integer
+        totalElements:
+          type: string
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Comment'
     Comment:
       type: object
       properties:
         id:
-          type: integer
+          type: long
         text:
           type: string
+        created_at:
+          type: string
+          format: date-time
+        created_by:
+          $ref: '#/components/schemas/Account'
+        ticket_id:
+          type: long
     CommentCreate:
       type: object
       required: [text]
@@ -268,7 +315,7 @@ components:
       type: object
       properties:
         id:
-          type: integer
+          type: long
         username:
           type: string
   securitySchemes:

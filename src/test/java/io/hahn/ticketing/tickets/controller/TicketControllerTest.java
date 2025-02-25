@@ -1,17 +1,11 @@
 package io.hahn.ticketing.tickets.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.hahn.ticketing.model.*;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.UserRequestPostProcessor;
-import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -20,24 +14,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@AutoConfigureMockMvc
-@SpringBootTest
-public class TicketControllerTest {
-    private final SimpleGrantedAuthority EMPLOYEE_AUTHORITY = new SimpleGrantedAuthority("EMPLOYEE");
-    private final SimpleGrantedAuthority IT_AUTHORITY = new SimpleGrantedAuthority("IT");
-
-    private final UserRequestPostProcessor mockEmployeeAccount = user("employee_demo").authorities(EMPLOYEE_AUTHORITY);
-    private final UserRequestPostProcessor mockAnotherEmployeeAccount = user("employee_demo_2").authorities(EMPLOYEE_AUTHORITY);
-    private final UserRequestPostProcessor mockITAccount = user("it_demo").authorities(IT_AUTHORITY);
-
-    @Autowired
-    private MockMvc mvc;
-
-    @Autowired
-    private ObjectMapper objectMapper;
+public class TicketControllerTest extends ControllerTest {
 
     @Test
-    @WithMockUser(username = "employee_demo", authorities = { "EMPLOYEE" })
     @Transactional
     public void whenUserIsEmployee_shouldCreateTicket() throws Exception {
         TicketCreate ticket = new TicketCreate(
@@ -48,7 +27,7 @@ public class TicketControllerTest {
                 Status.IN_PROGRESS
         );
         String json = objectMapper.writeValueAsString(ticket);
-        String response = mvc.perform(post("/tickets").content(json).contentType(MediaType.APPLICATION_JSON))
+        String response = mvc.perform(post("/tickets").content(json).contentType(MediaType.APPLICATION_JSON).with(mockEmployeeAccount))
                 .andExpect(status().isCreated())
                 .andReturn()
                 .getResponse()
@@ -56,7 +35,7 @@ public class TicketControllerTest {
 
         Ticket createdTicket = objectMapper.readValue(response, Ticket.class);
 
-        mvc.perform(get("/tickets/" + createdTicket.getId()))
+        mvc.perform(get("/tickets/" + createdTicket.getId()).with(mockEmployeeAccount))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value(ticket.getTitle()))
                 .andExpect(jsonPath("$.description").value(ticket.getDescription()))
@@ -67,7 +46,6 @@ public class TicketControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "it_demo", authorities = { "IT" })
     @Transactional
     public void whenUserIsNotEmployee_shouldNotCreateTicket() throws Exception {
         String json = objectMapper.writeValueAsString(new TicketCreate(
@@ -77,7 +55,7 @@ public class TicketControllerTest {
                 Category.HARDWARE,
                 Status.IN_PROGRESS
         ));
-        mvc.perform(post("/tickets").content(json).contentType(MediaType.APPLICATION_JSON))
+        mvc.perform(post("/tickets").content(json).contentType(MediaType.APPLICATION_JSON).with(mockITAccount))
                 .andExpect(status().isForbidden());
     }
 
