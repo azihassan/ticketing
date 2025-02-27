@@ -19,8 +19,8 @@ public class AccountEntity {
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "account_role",
-            joinColumns = @JoinColumn(name = "role_id"),
-            inverseJoinColumns = @JoinColumn(name = "account_id")
+            joinColumns = @JoinColumn(name = "account_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id")
     )
     public Set<RoleEntity> roles;
 

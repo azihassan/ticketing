@@ -16,10 +16,28 @@ paths:
             schema:
               $ref: '#/components/schemas/Login'
       responses:
-        '204':
+        '200':
           description: Login succeeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
         '401':
           description: Login failed
+
+  /me:
+    get:
+      summary: Logger user information
+      operationId: getMe
+      responses:
+        '200':
+          description: User info and roles
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+        '403':
+          description: Not logged in
 
   /tickets:
     get:
@@ -320,6 +338,17 @@ components:
         id:
           type: long
         username:
+          type: string
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/Role'
+    Role:
+      type: object
+      properties:
+        id:
+          type: long
+        role:
           type: string
   securitySchemes:
     BearerAuth:
