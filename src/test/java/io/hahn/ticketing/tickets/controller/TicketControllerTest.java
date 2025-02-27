@@ -111,7 +111,6 @@ public class TicketControllerTest extends ControllerTest {
                 .with(mockAnotherEmployeeAccount)
         ).andExpect(status().isCreated());
 
-        UserRequestPostProcessor mockITAccount = user("it_demo").authorities(new SimpleGrantedAuthority("IT"));
         mvc.perform(get("/tickets?page=0&size=20&status=IN_PROGRESS").with(mockITAccount))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(1));
