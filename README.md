@@ -8,7 +8,7 @@ You can build the project from source by following these steps:
 
 - git clone https://github.com/azihassan/ticketing
 - ./mvnw package
-- java -jar target/ticketing-0.0.1-SNAPSHOT.jar
+- java -jar target/ticketing-0.0.2-SNAPSHOT.jar
 
 The project expects an Oracle database to be running on localhost:1521. You can find the preconfigured credentials in src/main/resources/application.properties
 

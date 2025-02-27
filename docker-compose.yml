@@ -2,7 +2,7 @@ version: '2.2'
 
 services:
   app:
-    image: azihassan/ticketing:v0.0.1
+    image: azihassan/ticketing:v0.0.2
     depends_on:
       oracle-db:
         condition: service_healthy
